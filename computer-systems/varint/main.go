@@ -1,67 +1,53 @@
 package main
 
 import (
-	"fmt"
-	"math"
+	"encoding/binary"
+	"log"
+	"os"
 )
 
-func AddContinuationBit(bytes []uint8) {
-	for i := len(bytes) - 1; i > 0; i-- {
-		bytes[i] = bytes[i] + 128
-	}
-}
-
-func CalcEncodeValue(splited []uint8) int {
-	encoded := 0
-
-	for i, v := range splited {
-		mult := int(math.Pow(256, float64(i)))
-		encoded = encoded + int(v)*mult
+func ReadUintFile(filename string) uint64 {
+	content, err := os.ReadFile(filename)
+	if err != nil {
+		log.Fatalf("Got error reading file: %v", err)
 	}
 
-	return encoded
+	res := binary.BigEndian.Uint64(content)
+	return res
 }
 
-func Encode(i uint64) int {
-	splited := ChunkSplit(i)
-	fmt.Print(splited)
-
-	smallEndian := ConvertSmallEndian(splited)
-
-	AddContinuationBit(smallEndian)
-
-	encoded := CalcEncodeValue(smallEndian)
-
-	return encoded
+func main() {
+	ReadUintFile("maxint.uint64")
 }
 
-func ChunkSplit(i uint64) []uint8 {
-	rest := i
+func Encode(i uint64) []byte {
+	value := i
+	var encodedBytes []byte
 
-	var splited []uint8
+	for value > 0 {
+		curr := value & 0x7F
+		value = value >> 7
 
-	multiplier := uint64(math.Pow(2, 7))
-
-	for {
-		if rest == 0 {
-			break
+		if value > 0 {
+			curr = curr + 0x80
 		}
 
-		reminder := (rest % multiplier)
-		rest = rest / multiplier
-
-		splited = append(splited, uint8(reminder))
+		encodedBytes = append(encodedBytes, byte(curr))
 	}
 
-	return splited
+	return encodedBytes
 }
 
-func ConvertSmallEndian(bytes []uint8) []uint8 {
-	smallEndian := make([]uint8, len(bytes))
+func Decode(encoded []byte) (decoded uint64) {
+	for i := len(encoded) - 1; i >= 0; i-- {
+		v := encoded[i]
 
-	for i := range smallEndian {
-		smallEndian[i] = bytes[len(bytes)-i-1]
+		if i < len(encoded)-1 {
+			decoded = decoded << 7
+		}
+		x := v & 0x7F
+		decoded = decoded | uint64(x)
 	}
 
-	return smallEndian
+	return
 }
