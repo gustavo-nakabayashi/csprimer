@@ -15,18 +15,18 @@ func TestReadUIntFile(t *testing.T) {
 
 func TestEncoding(t *testing.T) {
 	tests := []struct {
-		filename     string
+		filename string
 		expected []byte
 	}{
-		{"./150.uint64", []byte{0X96, 0X01}},
+		{"./150.uint64", []byte{0x96, 0x01}},
 		{"./1.uint64", []byte{1}},
-    {"./maxint.uint64", []byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x01}},
+		{"./maxint.uint64", []byte{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0x01}},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.filename, func(t *testing.T) {
-      want := ReadUintFile(tt.filename)
-      got := Decode(Encode(want))
+			want := ReadUintFile(tt.filename)
+			got := Decode(Encode(want))
 			if got != want {
 				t.Errorf("For file %v, got %v, wanted %v",
 					tt.filename, got, want)
