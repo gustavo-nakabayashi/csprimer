@@ -1,7 +1,7 @@
 /*
-
- */
-
+Normalize 3 and 4 char hexes
+implement alpha
+*/
 package main
 
 import (
@@ -11,6 +11,8 @@ import (
 	"log"
 	"os"
 	"regexp"
+	"slices"
+	"strings"
 )
 
 var hexCharToInt = map[string]int{
@@ -32,15 +34,26 @@ var hexCharToInt = map[string]int{
 	"f": 15,
 }
 
-func HexToRgb(hex string) ([3]int, error) {
-	if len(hex) != 7 {
-		return [3]int{-1, -1, -1}, errors.New("Hex is not in the format #XXXXXX")
+func ConvertColorValues() {}
+
+func NormalizeHex(hex string) string {
+	normalized := strings.ToLower(hex)
+
+	if len(hex) == 7 || len(hex) == 9 {
+		return normalized
 	}
 
-	var rgb [3]int
+	normalized = normalized[:1] + strings.Repeat(normalized[1:2], 2) + strings.Repeat(normalized[2:3], 2) + strings.Repeat(normalized[3:4], 2) + strings.Repeat(normalized[4:], 2)
+	return normalized
+}
 
-	for i := 0; i < 3; i++ {
-		hexColor := hex[1+i*2 : 3+i*2]
+func CalcRgb(hex string) []int {
+	digits := hex[1:]
+
+	rgb := make([]int, len(digits)/2)
+
+	for i := 0; i < len(digits); i = i + 2 {
+		hexColor := digits[i : i+2]
 		color0, ok := hexCharToInt[hexColor[0:1]]
 		if !ok {
 			log.Fatalf("Failed to convert to number")
@@ -51,10 +64,30 @@ func HexToRgb(hex string) ([3]int, error) {
 			log.Fatalf("Failed to convert to number")
 		}
 
-		rgb[i] = color0*16 + color1
+		rgb[i/2] = color0<<4 + color1
 	}
 
-	return rgb, nil
+	return rgb
+}
+
+func HexToRgb(hex string) (string, error) {
+	if !slices.Contains([]int{4, 5, 7, 9}, len(hex)) {
+		return "", errors.New("Hex is not valid")
+	}
+
+	normalized := NormalizeHex(hex)
+
+	rgb := CalcRgb(normalized)
+
+	var rgbString string
+
+	if len(rgb) == 3 {
+		rgbString = fmt.Sprintf("rgb(%v %v %v)", rgb[0], rgb[1], rgb[2])
+	} else {
+		rgbString = fmt.Sprintf("rgba(%v %v %v / %.5f)", rgb[0], rgb[1], rgb[2], float32(rgb[3])/255.0)
+	}
+
+	return rgbString, nil
 }
 
 func main() {
@@ -77,9 +110,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		rgbString := fmt.Sprintf("rgb(%d, %d, %d)", rgb[0], rgb[1], rgb[2])
-
-		converted := hexRegex.ReplaceAllLiteralString(line, rgbString)
+		converted := hexRegex.ReplaceAllLiteralString(line, rgb)
 		os.Stdout.WriteString(converted)
 		os.Stdout.WriteString("\n")
 	}
