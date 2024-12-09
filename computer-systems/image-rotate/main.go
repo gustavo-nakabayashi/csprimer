@@ -49,32 +49,36 @@ func ReadBmpData(filename string) BmpImage {
 }
 
 func main() {
-	bmpImage := ReadBmpData("./stretch-goal.bmp")
-	file, err := os.ReadFile("./stretch-goal.bmp")
+  fmt.Print(os.Args[1])
+	bmpImage := ReadBmpData(os.Args[1])
+	file, err := os.ReadFile(os.Args[1])
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	rotatedPixelData := make([][][]byte, bmpImage.width)
-
-	for i := uint32(0); i < bmpImage.width; i++ {
-		rotatedPixelData[i] = make([][]byte, bmpImage.height)
+	rotatedHeight := bmpImage.width
+	rotatedWidth := bmpImage.height
+	rotatedRowSize := uint64(bmpImage.bitsPerPixel) * uint64(rotatedWidth) >> 3
+	var padding uint64
+	if rotatedRowSize%4 != 0 {
+		padding = (4 - rotatedRowSize%4)
+		rotatedRowSize = rotatedRowSize + padding
 	}
 
-	fmt.Printf("w: %d, h: %d\n", bmpImage.width, bmpImage.height)
+	rotatedPixelData := make([][][]byte, rotatedHeight)
 
-	fmt.Printf("h: %d, w: %d\n", len(rotatedPixelData), len(rotatedPixelData[0]))
+	for i := uint32(0); i < rotatedHeight; i++ {
+		rotatedPixelData[i] = make([][]byte, rotatedWidth)
+	}
 
-	for i := uint32(0); i < bmpImage.width; i++ {
-		for j := uint32(0); j < bmpImage.height; j++ {
-			rotatedPixelData[i][j] = bmpImage.pixelData[j][bmpImage.width-1-i]
+	for i := uint32(0); i < rotatedHeight; i++ {
+		for j := uint32(0); j < rotatedWidth; j++ {
+			rotatedPixelData[i][j] = bmpImage.pixelData[j][rotatedHeight-1-i]
 		}
 	}
 
 	newImage := make([]byte, bmpImage.startingAddress)
 	copy(newImage, file[:bmpImage.startingAddress])
-
-	newPadding := 1
 
 	for i := (0); i < len(rotatedPixelData); i++ {
 		for j := (0); j < len(rotatedPixelData[0]); j++ {
@@ -83,7 +87,7 @@ func main() {
 			}
 		}
 
-		for i := uint8(0); i < uint8(newPadding); i++ {
+		for i := uint8(0); i < uint8(padding); i++ {
 			p := byte(0)
 			newImage = append(newImage, p)
 		}
