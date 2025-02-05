@@ -105,10 +105,6 @@ func main() {
 			panic("one of ports is not 80")
 		}
 
-		// if dPort != 80 {
-		// 	continue
-		// }
-
 		flags := tcp[13:14]
 
 		ackFlag := flags[0] & 16 > 0
