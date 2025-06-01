@@ -38,27 +38,44 @@ class Scan {
 
   self() {
     if (this.index >= table.length) {
-      return null
+      return null;
     }
 
-    return table[this.index]
+    return table[this.index];
   }
 }
 
 // This will return data from db
 class Root {
-  constructor() {}
+  result: Array<Object>;
+  nextFunction: () => void;
+
+  constructor(nextFunction: () => void) {
+    this.result = [];
+    this.nextFunction = nextFunction;
+  }
 
   self() {
     return null;
   }
 
-  next() {}
+  next() {
+    const n = this.nextFunction();
+
+    if (n === null) {
+      return this.result;
+    }
+  }
 }
 
 // This will be a function that returns only the keys filtered
 // const Projection = (cols) => {};
 
-const Instructions = [{}];
+const Instructions = [{
 
-const Executor = (instructions: Instructions) => {};
+
+}];
+
+const Executor = (instructions: Instructions) => {
+
+};
